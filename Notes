@@ -1,0 +1,66 @@
+# API Query Reference
+
+`GET /` Get's basic system/cluster data
+
+`GET _cat/indices/` Get's a list of indexes (including system indexes)
+
+`GET _cat/indices/*,-.*?v` Get list of non system indexes
+
+`GET kibana_sample_data_ecommerce/_search` Get list of 10 documents from index
+
+`GET /matt-index/_search?q=rocky mountain` Keyword search in matt-index
+
+# Create Indices
+
+> Note: Indexes must be named with lowercase characters
+
+`PUT /blogs` Create blogs index
+
+`GET /_cat/indicies/blogs?v&h=health,status,index,docs.count,store.size&s=index:desc` Verify blogs index was created by listing these attributes of the index
+
+`GET /_cat/indices?v&h=health,status,index,docs.count,store.size&s=index:desc` Get a list of all indexes
+
+# Document Manipulation
+PUT - Operations will insert docs with a user specified document ID. The operation is idompotent, but requires that doc ID and documents are fully replaced. No partial update option is available.
+
+POST - Operation will insert docs with a system generated doc ID. Operation is not idompotent. If a doc ID is specified and already exists the operation will fail. Partial updates are available with POST operations.
+
+**Create doc with _id number of 1 - idompotent**
+```
+PUT /blogs/_doc/1
+{
+  "name": "Cola",
+  "species": "dog"
+}
+```
+
+**Create doc with an elasticsearch generate ID number**
+```
+POST /blogs/_doc
+{
+  "name": "Echo",
+  "species": "dog"
+}
+```
+**Create doc with a specified _id field - this will fail if the doc already exists**
+```
+POST /blogs/_create/iaVYB5wBMieTKl4qjWwf
+{
+  "name": "Echo",
+  "species": "dog"
+}
+```
+
+
+**Perform an update (partial update)**
+```
+POST /blogs/_update/iaVYB5wBMieTKl4qjWwf
+{
+  "doc":
+    {
+      "breed": "Shepherd"
+    }
+}
+```
+
+
