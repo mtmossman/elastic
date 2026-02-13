@@ -155,3 +155,122 @@ Below is a search query for a data-stream that searches for a particuar value
 | Agent Policy| A configuration that defines which integrations and settings apply to a group of Elastic Agents |
 
 > Names become part of the data stream name. It's a useful way to segment data sources so data does not get mixed. For example, this lab is using "labenv" as a namespace for the system integration. When building a home lab you may use something similar when testing a new data source.
+
+
+
+# Data Management Concepts
+
+Ask ChatGPT what rollover is and why it's important. It will explain how rollover is the (typically automated) function that creates new indices when they get too large.An index is given an alias such as `my-metrics` and from the standpoint of the data forwarder, that never changes. but Elastic on the background is indexing the data in my-metrics-000001. After that index gets 7 days old, or 50GB in size, or whatever the rollover/ILM policy dictates, Elastic then creates my-metrics-000002 which all new data being sent to my-metrics is indexed to. This keeps indicies from growing too large and slowing down queries.
+
+## Key Terms
+
+| Term | Definition |
+|-|-|
+| Component template	| A reusable building block containing mappings, settings, or aliases that can be combined into index templates |
+| Index template	| A configuration that automatically applies settings, mappings, and aliases to new indices matching a specified pattern |
+| Index pattern	| A wildcard expression (e.g., my-metrics-*) that determines which indices an index template applies to |
+| Priority	| A numeric value that determines which template takes precedence when multiple templates match the same index name |
+| Simulate Index API	| An API that shows what settings, mappings, and aliases would be applied to an index without actually creating it |
+
+
+API Command to Create a Component Template
+
+```json
+PUT _component_template/time-series-mappings
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "message": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}
+```
+
+API Command to create index using a component template
+
+```
+PUT _index_template/my-metrics-template
+{
+  "priority": 500,
+  "index_patterns": [
+    "my-metrics-*"
+  ],
+  "composed_of": [
+    "time-series-mappings"
+  ]
+}
+```
+
+`POST _index_template/_simulate_index/my-metrics-test` This command will give you what an index template would look like if it were to be created using the name `my-metrics-test` but doesn't actually created it.
+
+Here is how to create another component template while specifying the number of replicas. Replicas are duplicates of the original copy of data. Useful for integrity of data in the event nodes in a cluster go down. Each replica is a full copy of the data.
+
+PUT _component_template/time-series-settings
+{
+  "template": {
+    "settings": {
+      "index": {
+        "number_of_replicas": "2"
+      }
+    }
+  }
+}
+
+# Index Alises and Write Indexes
+
+In this lesson, you'll create an index with an alias and configure it as the write index. This matters because aliases allow applications to write to a single, stable endpoint while Elasticsearch transparently routes documents to the correct backing index—enabling seamless index rollovers without application changes.
+
+| Term	| Definition |
+|-|-|
+| Index alias	| A secondary name that points to one or more indices, allowing applications to reference indices without knowing their actual names |
+| Index rollover	| Creates a new write index when the current one reaches a certain size, number of docs, or age and can target a data stream or an alias with a write index |
+| Write index	| The single index within an alias that receives all indexing (write) operations; required when an alias points to multiple indices |
+| Backing index	| An actual index that an alias points to; an alias can have multiple backing indices for reads but only one write index |
+
+The naming convention -000001 is an Elasticsearch best practice for rollover indices. When you call the rollover API, Elasticsearch automatically increments the numeric suffix (000001 → 000002). Using this pattern from the start enables automated index lifecycle management.
+
+This creates an index that is configured to be the write index for the my-metrics alias
+```
+PUT my-metrics-000001
+{
+    "aliases": {
+        "my-metrics": {
+            "is_write_index": true
+        }
+    }
+}
+```
+
+Verify new index has been created and has appropriate settings.
+
+GET my-metrics-000001
+POST _index_template/_simulate_index/my-metrics-000001
+
+# Index Rollover
+
+In this challenge, you'll perform a rollover operation to create a new index and redirect writes to it. This matters because rollover is the foundation of time-series data management in Elasticsearch—it allows you to create new indices based on size, age, or document count conditions while maintaining a stable alias for applications.
+
+| Term	| Definition |
+|-|-|
+| Rollover	| An operation that creates a new index and transfers the write index designation from the old index to the new one |
+| Rollover conditions	Criteria | (max_age, max_docs, max_size, max_primary_shard_size) that determine when a rollover should occur |
+| Index Lifecycle Management (ILM)	| A feature that automates rollover and other index operations based on policies; manual rollover is typically used for testing or one-off operations |
+
+```
+POST my-metrics/_rollover
+{
+  "conditions": {
+    "max_age": "2s"
+  }
+}
+```
