@@ -65,6 +65,15 @@ POST /blogs/_update/iaVYB5wBMieTKl4qjWwf
 }
 ```
 
+**Bulk inserts**
+```
+POST /high_schools/_bulk
+{"index":{"_id":"4"}}
+{"Name":"Newark","Mascot":"Yellowjackets"}
+{"index":{"_id":"5"}}
+{"Name":"Charter","Mascot":"Calculator"}
+```
+
 # Document Search
 Search occurs on data-streams and indices.
 
