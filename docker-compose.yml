@@ -2,7 +2,9 @@
 ## https://www.elastic.co/blog/getting-started-with-the-elastic-stack-and-docker-compose
 ## https://github.com/elkninja/elastic-stack-docker-part-one
 
-# File is based off docker-compose file in repo linked above. The original file had a setup container that dynamically generated the instances.yml file for elasticsearch certificates. I could not successfully modify that and replaced it with statically generated cert files based of my local CA. I also added environment variables for kibana to enable SSL by default and had to change the healthchecks for both es01 and kibana to use https and ca files for the checks. Otherwise kibana would show as unhealthy when bringing the containers up.
+# File is based off docker-compose file in repo linked above. The original file had a setup container that dynamically generated the instances.yml file for elasticsearch certificates.
+# I could not successfully modify that and replaced it with statically generated cert files based of my local CA.
+# I also added environment variables for kibana to enable SSL by default and had to change the healthchecks for both es01 and kibana to use https and ca files for the checks. Otherwise kibana would show as unhealthy when bringing the containers up.
 
 #version: "3.8"
 volumes:
