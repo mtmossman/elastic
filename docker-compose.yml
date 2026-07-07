@@ -49,10 +49,7 @@ networks:
 
 services:
   es01:
-<<<<<<< HEAD
-=======
     container_name: elastic
->>>>>>> d53b983 (Adding updates to Docker compose)
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     labels:
       co.elastic.logs/module: elasticsearch
@@ -120,20 +117,13 @@ services:
       - SERVER_SSL_ENABLED=true
       - SERVER_SSL_KEY=config/certs/kibana/kibana.key
       - SERVER_SSL_CERTIFICATE=config/certs/kibana/kibana.crt
-<<<<<<< HEAD
-=======
       - XPACK_REPORTING_ROLES_ENABLED=false
->>>>>>> d53b983 (Adding updates to Docker compose)
     mem_limit: ${KB_MEM_LIMIT}
     healthcheck:
       test:
         [
           "CMD-SHELL",
-<<<<<<< HEAD
-          "curl --cacert config/certs/ca/ca.crt -I https://compute.home.lab:5601 | grep -q 'HTTP/1.1 302 Found'",
-=======
           "curl --cacert config/certs/ca/ca.crt -I https://compute.home.lab:5601 | grep -q '302'",
->>>>>>> d53b983 (Adding updates to Docker compose)
         ]
       interval: 10s
       timeout: 10s
@@ -212,8 +202,6 @@ services:
       - ELASTIC_USER=elastic
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - ELASTIC_HOSTS=https://es01:9200
-<<<<<<< HEAD
-=======
 
   fleet:
     container_name: fleet
@@ -241,4 +229,3 @@ services:
       - FLEET_SERVER_HOST=0.0.0.0
       - FLEET_SERVER_PORT=8220
     mem_limit: ${MEM_LIMIT}
->>>>>>> d53b983 (Adding updates to Docker compose)
