@@ -49,6 +49,10 @@ networks:
 
 services:
   es01:
+<<<<<<< HEAD
+=======
+    container_name: elastic
+>>>>>>> d53b983 (Adding updates to Docker compose)
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     labels:
       co.elastic.logs/module: elasticsearch
@@ -66,7 +70,8 @@ services:
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=true
       - xpack.security.http.ssl.key=certs/es01/es01.key
-      - xpack.security.http.ssl.certificate=certs/es01/es01.crt
+      - xpack.security.http.ssl.certificate=certs/es01/es01-chain.crt
+      #- xpack.security.http.ssl.certificate=certs/es01/es01.crt
       - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.enabled=true
       - xpack.security.transport.ssl.key=certs/es01/es01.key
@@ -90,6 +95,7 @@ services:
       retries: 120
 
   kibana:
+    container_name: kibana 
     depends_on:
       es01:
         condition: service_healthy
@@ -99,6 +105,7 @@ services:
     volumes:
       - certs:/usr/share/kibana/config/certs
       - kibanadata:/usr/share/kibana/data
+      - "./kibana-node.options:/usr/share/kibana/config/node.options:ro"
     ports:
       - ${KIBANA_PORT}:5601
     environment:
@@ -113,24 +120,34 @@ services:
       - SERVER_SSL_ENABLED=true
       - SERVER_SSL_KEY=config/certs/kibana/kibana.key
       - SERVER_SSL_CERTIFICATE=config/certs/kibana/kibana.crt
+<<<<<<< HEAD
+=======
+      - XPACK_REPORTING_ROLES_ENABLED=false
+>>>>>>> d53b983 (Adding updates to Docker compose)
     mem_limit: ${KB_MEM_LIMIT}
     healthcheck:
       test:
         [
           "CMD-SHELL",
+<<<<<<< HEAD
           "curl --cacert config/certs/ca/ca.crt -I https://compute.home.lab:5601 | grep -q 'HTTP/1.1 302 Found'",
+=======
+          "curl --cacert config/certs/ca/ca.crt -I https://compute.home.lab:5601 | grep -q '302'",
+>>>>>>> d53b983 (Adding updates to Docker compose)
         ]
       interval: 10s
       timeout: 10s
       retries: 120
 
   metricbeat01:
+    container_name: metricbeat
     depends_on:
       es01:
         condition: service_healthy
       kibana:
         condition: service_healthy
     image: docker.elastic.co/beats/metricbeat:${STACK_VERSION}
+    hostname: metricbeat.home.lab
     user: root
     volumes:
       - certs:/usr/share/metricbeat/certs
@@ -150,6 +167,7 @@ services:
       - --strict.perms=false
 
   filebeat01:
+    container_name: filebeat
     depends_on:
       es01:
         condition: service_healthy
@@ -162,6 +180,8 @@ services:
       - "./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
       - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    ports:
+      - "9001:9001/udp"
     environment:
       - ELASTIC_USER=elastic
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
@@ -172,6 +192,7 @@ services:
       - --strict.perms=false
 
   logstash01:
+    container_name: logstash
     depends_on:
       es01:
         condition: service_healthy
@@ -191,3 +212,33 @@ services:
       - ELASTIC_USER=elastic
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - ELASTIC_HOSTS=https://es01:9200
+<<<<<<< HEAD
+=======
+
+  fleet:
+    container_name: fleet
+    depends_on:
+      kibana:
+        condition: service_healthy
+    image: docker.elastic.co/elastic-agent/elastic-agent:${STACK_VERSION}
+    volumes:
+      - certs:/certs
+    ports:
+      - ${FLEET_PORT}:8220
+    environment:
+      - ELASTICSEARCH_HOST=https://es01:9200
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTICSEARCH_CA=/certs/ca/ca.crt
+      - FLEET_SERVER_ENABLE=true
+      - FLEET_SERVER_CERT=/certs/fleet/fleet.crt
+      - FLEET_SERVER_CERT_KEY=/certs/fleet/fleet.key
+      - FLEET_SERVER_ELASTICSEARCH_HOST=https://es01:9200
+      - FLEET_SERVER_ELASTICSEARCH_CA=/certs/ca/ca.crt
+      - FLEET_URL=https://fleet:8220
+      - KIBANA_HOST=https://kibana:5601
+      - KIBANA_CA=/certs/ca/ca.crt
+      - FLEET_SERVER_HOST=0.0.0.0
+      - FLEET_SERVER_PORT=8220
+    mem_limit: ${MEM_LIMIT}
+>>>>>>> d53b983 (Adding updates to Docker compose)
