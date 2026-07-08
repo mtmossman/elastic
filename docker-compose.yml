@@ -192,6 +192,9 @@ services:
     labels:
       co.elastic.logs/module: logstash
     user: root
+    ports:
+      - "5140:5140/udp"
+      - "5140:5140/tcp"
     volumes:
       - certs:/usr/share/logstash/certs
       - logstashdata01:/usr/share/logstash/data
